@@ -23,7 +23,7 @@ Add following settings to your`docker-compose.yml` file:
       - SMTP_HOST=smtp.example.com
       - SMTP_USERNAME=noreply@example.com
       - SMTP_PASSWORD=password
-      - SMTP_FROM="httprint <httprint@example.com>"
+      - SMTP_FROM=httprint <httprint@example.com>
       - LOG_LEVEL=DEBUG  # optional, defaults to INFO
     restart: unless-stopped
   ```
