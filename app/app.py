@@ -30,6 +30,7 @@ class httprint_mail_bot():
         self.SMTPUSERNAME = self.conf.get("smtp-username")
         self.SMTPPASSWORD = self.conf.get("smtp-password")
         self.SMTPFROM = self.conf.get("smtp-from")
+        self.KEEPMAIL = self.conf.get("keep-mail")
 
         self.mailbox = None
 
@@ -56,12 +57,14 @@ class httprint_mail_bot():
         mails = self.mailbox.fetch(A(seen=False), mark_seen=False)
         for mail in mails:
 
+            haspdf = False
             for att in mail.attachments:
 
                 fname = att.filename
                 if not att.content_type == "application/pdf":
                     continue
                     
+                haspdf = True
                 logger.info(f"Document {fname} received")
                 logger.debug(f"Subject {mail.subject}")
 
@@ -98,10 +101,11 @@ class httprint_mail_bot():
 
                 logger.info(msg)
 
-            self.mailbox.delete(mail.uid)
-            # self.mailbox.flag(mail.uid, MailMessageFlags.SEEN, True)
-
-
+            if (not haspdf) and self.KEEPMAIL:
+                self.mailbox.flag(mail.uid, MailMessageFlags.SEEN, True)
+            else:
+                self.mailbox.delete(mail.uid)
+                
 
 
     def parseopt(self, optstr):
@@ -130,7 +134,8 @@ class httprint_mail_bot():
         return(d)
 
 
-
+def strbool(s):
+    return s.lower() in ('true', '1', 't', 'y', 'yes')
 
 
 if __name__ == '__main__':
@@ -151,6 +156,7 @@ if __name__ == '__main__':
     config["smtp-username"] = os.environ.get("SMTP_USERNAME", config["imap-username"])
     config["smtp-password"] = os.environ.get("SMTP_PASSWORD", config["imap-password"])
     config["smtp-from"] = os.environ.get("SMTP_FROM", config["smtp-username"])
+    config["keep-mail"] = strbool(os.environ.get("KEEP_MAIL", "false"))
 
     HMB = httprint_mail_bot(config)
     HMB.start()
